@@ -1,17 +1,17 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 
 const DetailScreen = ({ route }: any) => {
-  const { service } = route.params; // Lấy thông tin dịch vụ từ params
+  const { service } = route.params; // Get service information from params
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>{service.ServiceName}</Text>
-      <Text style={styles.text}>Giá: {service.Price} ₫</Text>
-      <Text style={styles.text}>Người tạo: {service.Creator}</Text>
-      <Text style={styles.text}>Cập nhật lần cuối: {new Date(service.FinalUpdate.seconds * 1000).toLocaleString()}</Text>
-      <Text style={styles.text}>Thời gian: {new Date(service.time.seconds * 1000).toLocaleString()}</Text>
-    </View>
+      <View style={styles.infoContainer}>
+        <Text style={styles.text}>Giá: <Text style={styles.price}>{service.Price} ₫</Text></Text>
+        <Text style={styles.text}>Người tạo: <Text style={styles.creator}>{service.Creator}</Text></Text>
+      </View>
+    </ScrollView>
   );
 };
 
@@ -19,15 +19,40 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    backgroundColor: '#F2F4F8', // Màu nền nhẹ hơn cho tổng thể
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 20,
+    color: '#E60026', // Màu cho tiêu đề
+    textAlign: 'center',
+  },
+  infoContainer: {
+    backgroundColor: '#F9AAF9', // Màu nền trắng cho thông tin
+    borderRadius: 10,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2, // Để tạo bóng cho Android
   },
   text: {
     fontSize: 18,
-    marginBottom: 5,
+    marginBottom: 10,
+    color: '#333333', // Màu chữ đen cho thông tin
+  },
+  price: {
+    fontWeight: 'bold',
+    color: '#F08080', // Màu cho giá
+  },
+  creator: {
+    fontStyle: 'italic',
+    color: '#666666', // Màu cho người tạo
   },
 });
 

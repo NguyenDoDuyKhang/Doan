@@ -1,98 +1,124 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
-import { FIRESTORE_DB } from '../firebaseConfig'; // Cấu hình Firebase
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
+import { FIRESTORE_DB } from '../firebaseConfig'; // Firebase configuration
 import { collection, getDocs } from 'firebase/firestore'; // Firebase Firestore SDK
 
-// Định nghĩa kiểu dữ liệu Service
+// Define the Service data type
 type Service = {
   id: string;
   Creator: string;
-  FinalUpdate: string;
   Price: number;
   ServiceName: string;
-  time: string;
+  updateTime: string; // Thời gian cập nhật
+  editTime: string;   // Thời gian chỉnh sửa
 };
 
-const CustomerListScreen = ({ navigation }: any) => {
-  const [services, setServices] = useState<Service[]>([]); // Dữ liệu dịch vụ
-  const [loading, setLoading] = useState(true); // Trạng thái tải dữ liệu
+const CustomerListService = ({ navigation }: any) => {
+  const [services, setServices] = useState<Service[]>([]); // Services data
+  const [filteredServices, setFilteredServices] = useState<Service[]>([]); // Filtered services for search
+  const [loading, setLoading] = useState(true); // Data loading state
+  const [searchText, setSearchText] = useState(''); // Search input state
 
   useEffect(() => {
-    // Hàm lấy dữ liệu từ Firestore
+    // Function to fetch data from Firestore
     const fetchServices = async () => {
       try {
-        const querySnapshot = await getDocs(collection(FIRESTORE_DB, 'Service')); // Thay 'Service' bằng tên collection trong Firestore
-        const serviceList: Service[] = querySnapshot.docs.map(doc => ({
-          id: doc.id, // ID tài liệu
-          ...doc.data() as Omit<Service, 'id'>, // Lấy dữ liệu của dịch vụ từ Firestore
-        }));
-        setServices(serviceList); // Cập nhật state với dữ liệu dịch vụ
-        setLoading(false); // Tắt trạng thái loading sau khi tải dữ liệu
+        const querySnapshot = await getDocs(collection(FIRESTORE_DB, 'Service'));
+        const serviceList: Service[] = querySnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data as Omit<Service, 'id'>,
+            updateTime: data.updateTime ? data.updateTime.toDate().toISOString() : '', // Lấy thời gian cập nhật từ Firestore
+            editTime: data.editTime ? data.editTime.toDate().toISOString() : '',     // Lấy thời gian chỉnh sửa từ Firestore
+          };
+        });
+        setServices(serviceList);
+        setFilteredServices(serviceList); // Initially, show all services
+        setLoading(false);
       } catch (error) {
-        console.error('Lỗi khi lấy danh sách dịch vụ:', error);
-        setLoading(false); // Tắt loading nếu có lỗi
+        console.error('Error fetching service list:', error);
+        setLoading(false);
       }
     };
 
-    fetchServices(); // Gọi hàm khi component render
+    fetchServices();
   }, []);
 
-  // Hàm render mỗi item trong danh sách dịch vụ
+  // Function to filter services based on search text
+  const handleSearch = (text: string) => {
+    setSearchText(text);
+    if (text) {
+      const filteredData = services.filter(service =>
+        service.ServiceName.toLowerCase().includes(text.toLowerCase())
+      );
+      setFilteredServices(filteredData);
+    } else {
+      setFilteredServices(services);
+    }
+  };
+
+  // Function to render each item in the service list
   const renderItem = ({ item }: { item: Service }) => (
     <TouchableOpacity
       style={styles.item}
-      onPress={() => navigation.navigate('DetailScreen', { service: item })} // Chuyển hướng đến trang chi tiết
-      activeOpacity={0.7} // Thêm hiệu ứng chuyển động khi nhấn
+      onPress={() => navigation.navigate('DetailScreen', { service: item })}
+      activeOpacity={0.7}
     >
       <Text style={styles.itemName}>{item.ServiceName}</Text>
       <Text style={styles.itemPrice}>{item.Price} ₫</Text>
+      {item.updateTime && (
+        <Text style={styles.timeText}>Updated: {new Date(item.updateTime).toLocaleString()}</Text>
+      )}
+      {item.editTime && (
+        <Text style={styles.timeText}>Edited: {new Date(item.editTime).toLocaleString()}</Text>
+      )}
     </TouchableOpacity>
   );
 
-  // Hiển thị loading khi đang tải dữ liệu
+  // Show loading indicator while data is loading
   if (loading) {
-    return <ActivityIndicator size="large" color="#0000ff" style={{ flex: 1, justifyContent: 'center' }} />;
+    return <ActivityIndicator size="large" color="#ADA2F2" style={{ flex: 1, justifyContent: 'center' }} />;
   }
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerText}>CUSTOMER</Text>
-        <Text style={styles.logo}>KAMI SPA</Text>
-        
+        <Text style={styles.logo}>HANABI SPA</Text>
       </View>
       <View style={styles.content}>
-        <View style={styles.serviceListHeader}>
-          <Text style={styles.serviceListHeaderText}>Danh sách dịch vụ</Text>
-          <TouchableOpacity style={styles.addButton}>
-            <Text style={styles.addButtonText}>+</Text>
-          </TouchableOpacity>
-          <View style={{ height: 10 }} />
-        </View>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search services..."
+          value={searchText}
+          onChangeText={handleSearch}
+        />
+        <Text style={styles.serviceListHeaderText}>Service List</Text>
         <FlatList
-          data={services} // Dữ liệu dịch vụ
-          renderItem={renderItem} // Hàm render cho mỗi item
-          keyExtractor={(item) => item.id} // Sử dụng ID làm khóa duy nhất
+          data={filteredServices}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
         />
       </View>
       <View style={styles.bottomNav}>
         <Text style={styles.navItem}>Home</Text>
-        <Text style={styles.navItem}>Transaction</Text>
-        <Text style={styles.navItem}>Customer</Text>
-        <Text style={styles.navItem}>Setting</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('SettingsScreen')}>
+          <Text style={styles.navItem}>Setting</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 };
 
-// Định nghĩa kiểu dáng giao diện
+// Define styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F7F7', // Thêm màu nền cho container
+    backgroundColor: '#F2F4F8', // Màu nền nhẹ
   },
   header: {
-    backgroundColor: '#F8C0C8',
+    backgroundColor: '#ADA2F2', // Màu nền header cập nhật
     alignItems: 'center',
     justifyContent: 'center',
     padding: 15,
@@ -105,41 +131,27 @@ const styles = StyleSheet.create({
   logo: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#E60026',
-  },
-  logoImage: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    marginLeft: 10,
+    color: '#E60026', // Màu đỏ tươi
   },
   content: {
     flex: 1,
     padding: 10,
-    backgroundColor: '#FFFFFF', // Thêm màu nền cho content
+    backgroundColor: '#FFFFFF',
   },
-  serviceListHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  searchInput: {
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 5,
     padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
+    marginBottom: 15,
+    marginHorizontal: 10,
+    backgroundColor: '#F5F5F5', // Màu xám nhạt cho input
   },
   serviceListHeaderText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333333',
-  },
-  addButton: {
-    backgroundColor: '#E60026',
-    padding: 10,
-    borderRadius: 10,
-  },
-  addButtonText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: 'white',
+    color: '#E60026', // Màu đỏ tươi cho tiêu đề danh sách dịch vụ
+    marginBottom: 10,
   },
   item: {
     padding: 10,
@@ -149,24 +161,29 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#333333', // Màu chữ đen cho tên dịch vụ
   },
   itemPrice: {
     fontSize: 14,
-    color: '#666666',
+    color: '#666666', // Màu chữ xám cho giá dịch vụ
+  },
+  timeText: {
+    fontSize: 12,
+    color: '#999', // Màu chữ xám nhạt cho thời gian
+    marginTop: 5,
   },
   bottomNav: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 10,
-    backgroundColor: '#F8C0C8',
+    backgroundColor: '#ADA2F2', // Màu nền cho bottom navigation
   },
   navItem: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: 'white',
+    color: 'white', // Màu chữ trắng cho item navigation
   },
 });
 
-export default CustomerListScreen;
+export default CustomerListService;

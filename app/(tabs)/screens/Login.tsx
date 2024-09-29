@@ -89,6 +89,14 @@ const LoginScreen = ({ navigation }: any) => {
       >
         <Text style={styles.loginText}>{loading ? 'Loading...' : 'Login'}</Text>
       </TouchableOpacity>
+
+      {/* Nút để chuyển hướng đến trang đăng ký */}
+      <TouchableOpacity 
+        style={styles.registerButton} 
+        onPress={() => navigation.navigate('Register')}
+      >
+        <Text style={styles.registerText}>Đăng ký tài khoản mới</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -96,13 +104,13 @@ const LoginScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F3F1FF', // Màu nền sáng hơn để làm nổi bật màu chính
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
     fontSize: 48,
-    color: '#F08080',
+    color: '#ADA2F2', // Màu lupine cho tiêu đề
     marginBottom: 50,
   },
   inputContainer: {
@@ -111,7 +119,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#BFA2D6', // Màu tím nhạt cho viền input
     borderRadius: 5,
     paddingHorizontal: 10,
   },
@@ -120,7 +128,7 @@ const styles = StyleSheet.create({
     height: 40,
   },
   loginButton: {
-    backgroundColor: '#F08080',
+    backgroundColor: '#ADA2F2', // Màu chính cho nút đăng nhập
     padding: 15,
     borderRadius: 5,
     width: '80%',
@@ -133,6 +141,13 @@ const styles = StyleSheet.create({
   errorText: {
     color: 'red',
     marginTop: 20,
+  },
+  registerButton: {
+    marginTop: 20,
+  },
+  registerText: {
+    color: '#ADA2F2', // Màu chính cho chữ đăng ký
+    fontSize: 16,
   },
 });
 
